@@ -11,7 +11,7 @@ const IMAGE_CONFIG = {
   imageUrl: 'https://files.salebot.pro/uploads/file_item/file/535162/8c83f27e1029995b4d5f21487898cffd-fotor-bg-remover-2025032712659.png'
 };
 
-export default function FreudTapper({ points, onPointsEarned }: { points: number; onPointsEarned: (points: number) => void }) {
+function FreudTapper({ points, onPointsEarned }: { points: number; onPointsEarned: (points: number) => void }) {
   const [isPressed, setIsPressed] = useState(false);
   const [currentQuote, setCurrentQuote] = useState('');
   const [showPoints, setShowPoints] = useState(false);

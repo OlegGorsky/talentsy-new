@@ -11,7 +11,7 @@ interface AdminPanelProps {
 
 export function AdminPanel({ onBack }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'users' | 'referrals' | 'analytics'>('users');
-  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date(2025, 3)); // April 2025
+  const [selectedMonth] = useState<Date>(new Date(2025, 3)); // April 2025
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -22,7 +22,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
 
         <MonthSelector
           selectedMonth={selectedMonth}
-          onMonthChange={setSelectedMonth}
+          onMonthChange={() => {}} // No-op since we only show April
         />
         
         <div className="flex justify-center border-t">

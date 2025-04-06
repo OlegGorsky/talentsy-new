@@ -29,7 +29,7 @@ export const MODAL_SPACING = {
 } as const;
 
 // Modal animation timing
-export const MODAL_ANIMATION = {
+const MODAL_ANIMATION = {
   DURATION: 200,            // Animation duration in ms
   OVERLAY_OPACITY: 0.5,     // Overlay opacity
 } as const;

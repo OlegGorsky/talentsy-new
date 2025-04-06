@@ -19,27 +19,37 @@ interface ReferralData {
   };
 }
 
-export function ReferralsTab() {
+interface ReferralsTabProps {
+  selectedMonth: Date;
+}
+
+export function ReferralsTab({ selectedMonth }: ReferralsTabProps) {
   const [referrals, setReferrals] = useState<ReferralData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  const getTableName = (table: string) => {
+    const isAprilCampaign = selectedMonth.getMonth() === 3; // April is 3 (0-based)
+    const prefix = isAprilCampaign ? 'campaign_' : '';
+    return `${prefix}${table}`;
+  };
 
   const fetchReferrals = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('referrals')
+        .from(getTableName('referrals'))
         .select(`
           id,
           referrer_id,
           referred_id,
           created_at,
-          referrer:users!referrals_referrer_id_fkey(
+          referrer:${getTableName('users')}!referrals_referrer_id_fkey(
             first_name,
             username,
             avatar_url
           ),
-          referred:users!referrals_referred_id_fkey(
+          referred:${getTableName('users')}!referrals_referred_id_fkey(
             first_name,
             username,
             avatar_url
@@ -71,7 +81,7 @@ export function ReferralsTab() {
         {
           event: '*',
           schema: 'public',
-          table: 'referrals'
+          table: getTableName('referrals')
         },
         () => {
           fetchReferrals();
@@ -86,7 +96,7 @@ export function ReferralsTab() {
         {
           event: '*',
           schema: 'public',
-          table: 'users'
+          table: getTableName('users')
         },
         () => {
           fetchReferrals();
@@ -98,14 +108,14 @@ export function ReferralsTab() {
       supabase.removeChannel(referralsChannel);
       supabase.removeChannel(usersChannel);
     };
-  }, []);
+  }, [selectedMonth]);
 
   const handleDeleteReferral = async (referralId: string) => {
     if (!confirm('Вы уверены, что хотите удалить эту реферальную связь?')) return;
 
     try {
       const { error } = await supabase
-        .from('referrals')
+        .from(getTableName('referrals'))
         .delete()
         .eq('id', referralId);
 

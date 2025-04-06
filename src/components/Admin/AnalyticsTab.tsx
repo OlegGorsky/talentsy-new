@@ -22,7 +22,11 @@ interface SourceStats {
   count: number;
 }
 
-export function AnalyticsTab() {
+interface AnalyticsTabProps {
+  selectedMonth: Date;
+}
+
+export function AnalyticsTab({ selectedMonth }: AnalyticsTabProps) {
   const [loading, setLoading] = useState(true);
   const [taskStats, setTaskStats] = useState<TaskStats>({
     totalVisitors: 0,
@@ -39,6 +43,12 @@ export function AnalyticsTab() {
     start: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
+
+  const getTableName = (table: string) => {
+    const isAprilCampaign = selectedMonth.getMonth() === 3; // April is 3 (0-based)
+    const prefix = isAprilCampaign ? 'campaign_' : '';
+    return `${prefix}${table}`;
+  };
 
   const decodeStartData = (startData: any): string => {
     if (!startData) return 'Нет метки';
@@ -81,28 +91,28 @@ export function AnalyticsTab() {
       ] = await Promise.all([
         // Get total visitors
         supabase
-          .from('users')
+          .from(getTableName('users'))
           .select('*')
           .gte('created_at', dateRange.start)
           .lte('created_at', dateRange.end + ' 23:59:59'),
         
         // Get quiz completions
         supabase
-          .from('quiz_completions')
+          .from(getTableName('quiz_completions'))
           .select('*')
           .gte('completed_at', dateRange.start)
           .lte('completed_at', dateRange.end + ' 23:59:59'),
         
         // Get telegram subscriptions
         supabase
-          .from('telegram_subscriptions')
+          .from(getTableName('telegram_subscriptions'))
           .select('*')
           .gte('subscribed_at', dateRange.start)
           .lte('subscribed_at', dateRange.end + ' 23:59:59'),
         
         // Get keyword completions
         supabase
-          .from('users')
+          .from(getTableName('users'))
           .select('*')
           .eq('keyword_completed', true)
           .gte('created_at', dateRange.start)
@@ -110,21 +120,21 @@ export function AnalyticsTab() {
         
         // Get prize exchanges
         supabase
-          .from('prize_exchanges')
+          .from(getTableName('prize_exchanges'))
           .select('*')
           .gte('created_at', dateRange.start)
           .lte('created_at', dateRange.end + ' 23:59:59'),
         
         // Get referrals
         supabase
-          .from('referrals')
+          .from(getTableName('referrals'))
           .select('*')
           .gte('created_at', dateRange.start)
           .lte('created_at', dateRange.end + ' 23:59:59'),
         
         // Get source stats
         supabase
-          .from('users')
+          .from(getTableName('users'))
           .select('start_data')
           .gte('created_at', dateRange.start)
           .lte('created_at', dateRange.end + ' 23:59:59')
@@ -167,14 +177,13 @@ export function AnalyticsTab() {
       'quiz_completions',
       'telegram_subscriptions',
       'prize_exchanges',
-      'referrals',
-      'phone_registration_points'
+      'referrals'
     ].map(table => 
       supabase
         .channel(`analytics_${table}`)
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table },
+          { event: '*', schema: 'public', table: getTableName(table) },
           () => {
             console.log(`Changes detected in ${table}, refreshing stats...`);
             fetchStats();
@@ -190,7 +199,7 @@ export function AnalyticsTab() {
       channels.forEach(channel => supabase.removeChannel(channel));
       clearInterval(interval);
     };
-  }, [dateRange]);
+  }, [dateRange, selectedMonth]);
 
   return (
     <div className="space-y-6 pb-6">
